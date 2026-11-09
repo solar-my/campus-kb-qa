@@ -1,0 +1,15 @@
+.git
+.gitignore
+.idea
+.vscode
+target
+.m2repo
+.maven-settings.xml
+.env
+uploads
+samples
+docs
+README.md
+demmand.md
+demmand_前端.md
+*.log

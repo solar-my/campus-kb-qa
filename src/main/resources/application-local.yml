@@ -1,0 +1,19 @@
+# 本地无 Docker 体验配置：
+#   IntelliJ Run Configuration → Active profiles: local
+#   H2 内存数据库 + 内存向量库，重启清空；无需 MySQL / Chroma。
+#   .env 中的 LLM_API_KEY / EMBEDDING_API_KEY 会被 application.yml 自动导入。
+spring:
+  datasource:
+    url: jdbc:h2:mem:campus_local;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+app:
+  rag:
+    store: memory
+  auth:
+    admin-username: admin
+    admin-password: admin123456
+    admin-display-name: 系统管理员

@@ -1,0 +1,10 @@
+# 开发模式：只启动 MySQL / Chroma，后端在 IntelliJ 或本机 Maven 运行。
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql chroma
+#
+# 这样可以把 MySQL 暴露到宿主机 127.0.0.1:3306；
+# Chroma 在基础 compose 中已经映射到 127.0.0.1:8000。
+services:
+  mysql:
+    ports:
+      - "127.0.0.1:3306:3306"

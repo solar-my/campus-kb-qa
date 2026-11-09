@@ -1,0 +1,92 @@
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+  compression:
+    enabled: true
+
+spring:
+  config:
+    # 本地运行时自动读取项目根目录 .env；Docker 中由 compose 注入，不受影响
+    import: optional:file:.env[.properties]
+  application:
+    name: campus-kb-qa
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/campus_kb?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:campus}
+    password: ${DB_PASSWORD:campus123456}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Shanghai
+        format_sql: false
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 55MB
+  jackson:
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+app:
+  auth:
+    jwt-secret: ${JWT_SECRET:please-change-this-secret-to-a-random-64-character-string-before-production}
+    token-expire-hours: ${TOKEN_EXPIRE_HOURS:168}
+    allow-registration: ${ALLOW_REGISTRATION:true}
+    admin-username: ${ADMIN_USERNAME:admin}
+    admin-password: ${ADMIN_PASSWORD:admin123456}
+    admin-display-name: ${ADMIN_DISPLAY_NAME:系统管理员}
+  storage:
+    upload-dir: ${UPLOAD_DIR:./uploads}
+    max-file-mb: 50
+  rag:
+    store: ${VECTOR_STORE:chroma}
+    collection: ${CHROMA_COLLECTION:campus_kb}
+    chunk-size: ${CHUNK_SIZE:500}
+    chunk-overlap: ${CHUNK_OVERLAP:80}
+    top-k: ${TOP_K:6}
+    min-score: ${MIN_SCORE:0.30}
+    max-context-chars: ${MAX_CONTEXT_CHARS:7000}
+    history-messages: ${HISTORY_MESSAGES:8}
+  ai:
+    chat:
+      base-url: ${LLM_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      api-key: ${LLM_API_KEY:}
+      model: ${LLM_MODEL:qwen-plus}
+      temperature: ${LLM_TEMPERATURE:0.2}
+      max-tokens: ${LLM_MAX_TOKENS:1500}
+      timeout-seconds: 120
+    embedding:
+      base-url: ${EMBEDDING_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      api-key: ${EMBEDDING_API_KEY:}
+      model: ${EMBEDDING_MODEL:text-embedding-v3}
+      dimensions: ${EMBEDDING_DIM:1024}
+      send-dimensions: ${EMBEDDING_SEND_DIMENSIONS:true}
+      batch-size: ${EMBEDDING_BATCH_SIZE:10}
+      timeout-seconds: 120
+    chroma:
+      base-url: ${CHROMA_URL:http://localhost:8000}
+      timeout-seconds: 30
+
+logging:
+  level:
+    root: INFO
+    com.campus.kb: INFO
+    dev.langchain4j: WARN

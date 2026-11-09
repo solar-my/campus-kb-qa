@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>校园知识库 & 学习资料智能问答复习助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <style>
+        :root { --primary:#2563eb; --primary-dark:#1d4ed8; --violet:#4f46e5; --ink:#0f172a; --muted:#64748b; --line:#e8edf5; --soft:#f5f8fd; }
+        * { box-sizing:border-box; }
+        .flex { display:flex; } .items-center { align-items:center; } .gap-2 { gap:.5rem; } .gap-3 { gap:.75rem; } .min-w-0 { min-width:0; } .w-full { width:100%; }
+        html, body, #app { height:100%; }
+        body { margin:0; font-family:Inter,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif; background:var(--soft); color:var(--ink); -webkit-font-smoothing:antialiased; }
+        [v-cloak] { display:none !important; }
+        button, input, textarea { font-family:inherit; }
+        button { cursor:pointer; }
+        button:disabled { cursor:not-allowed; opacity:.6; }
+        ::selection { background:#bfdbfe; }
+        .scroll-thin { scrollbar-width:thin; scrollbar-color:#cbd5e1 transparent; }
+        .scroll-thin::-webkit-scrollbar { width:5px; height:5px; }
+        .scroll-thin::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:999px; }
+        .scroll-thin::-webkit-scrollbar-track { background:transparent; }
+
+        .topbar { height:68px; flex:0 0 68px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; color:#fff; background:linear-gradient(110deg,#172554 0%,#1e40af 42%,#2563eb 70%,#4f46e5 100%); box-shadow:0 10px 30px rgba(30,64,175,.18); position:relative; z-index:50; }
+        .brand-mark { width:42px; height:42px; border-radius:13px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.2); font-size:20px; backdrop-filter:blur(8px); }
+        .brand-title { font-size:17px; font-weight:700; letter-spacing:.3px; line-height:1.2; }
+        .brand-title .accent { color:#bfdbfe; }
+        .tagline { font-size:11px; color:rgba(255,255,255,.72); margin-top:3px; letter-spacing:.2px; }
+        .top-actions { display:flex; align-items:center; gap:10px; }
+        .model-pill { display:flex; align-items:center; gap:7px; border:1px solid rgba(255,255,255,.18); background:rgba(15,23,42,.18); border-radius:999px; padding:6px 11px; font-size:11px; color:rgba(255,255,255,.9); }
+        .model-dot { width:7px; height:7px; border-radius:50%; background:#4ade80; box-shadow:0 0 0 3px rgba(74,222,128,.18); }
+        .model-dot.bad { background:#f87171; box-shadow:0 0 0 3px rgba(248,113,113,.18); }
+        .btn-topbar { display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 13px; border-radius:10px; color:#fff; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); font-size:12px; transition:all .18s ease; }
+        .btn-topbar:hover { background:rgba(255,255,255,.18); transform:translateY(-1px); }
+        .user-chip { display:flex; align-items:center; gap:9px; border-radius:12px; padding:4px 8px 4px 5px; background:rgba(15,23,42,.2); border:1px solid rgba(255,255,255,.15); transition:background .18s; }
+        .user-chip:hover { background:rgba(15,23,42,.3); }
+        .avatar { width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; background:linear-gradient(135deg,#93c5fd,#c4b5fd); color:#1e3a8a; }
+        .user-meta { text-align:left; line-height:1.15; }
+        .user-name { font-size:12px; font-weight:600; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .user-role { font-size:10px; color:rgba(255,255,255,.65); }
+        .user-menu { position:relative; }
+        .dropdown { position:absolute; right:0; top:48px; width:210px; background:#fff; color:var(--ink); border-radius:14px; border:1px solid var(--line); box-shadow:0 18px 50px rgba(15,23,42,.18); padding:8px; z-index:80; }
+        .dropdown-head { padding:10px 10px 12px; border-bottom:1px solid #f1f5f9; margin-bottom:6px; }
+        .dropdown-item { width:100%; display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:9px; border:0; background:transparent; font-size:12px; color:#334155; text-align:left; }
+        .dropdown-item:hover { background:#f1f5fd; color:var(--primary); }
+        .dropdown-item.danger:hover { background:#fef2f2; color:#dc2626; }
+
+        .app-shell { height:100vh; display:flex; flex-direction:column; overflow:hidden; background:#f5f8fd; }
+        .workspace { flex:1; min-height:0; display:flex; position:relative; }
+        .sidebar { width:320px; flex:0 0 320px; min-height:0; display:flex; flex-direction:column; background:#fff; border-right:1px solid var(--line); z-index:30; }
+        .sidebar-scroll { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; }
+        .side-section { padding:18px 18px 16px; border-bottom:1px solid #f1f5f9; }
+        .side-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+        .side-title h2 { margin:0; font-size:13px; font-weight:700; letter-spacing:.2px; display:flex; align-items:center; gap:7px; }
+        .side-title h2 i { color:var(--primary); }
+        .badge-soft { font-size:10px; color:#2563eb; background:#eff6ff; border:1px solid #dbeafe; border-radius:6px; padding:2px 6px; font-weight:600; }
+        .dropzone { border:1.5px dashed #bfdbfe; border-radius:16px; background:linear-gradient(180deg,#f8fbff,#f2f7ff); padding:20px 14px; text-align:center; cursor:pointer; transition:all .2s ease; }
+        .dropzone:hover, .dropzone.drag { border-color:#60a5fa; background:#eff6ff; box-shadow:0 8px 24px rgba(37,99,235,.08); transform:translateY(-1px); }
+        .dropzone i.drop-icon { font-size:26px; color:#3b82f6; margin-bottom:8px; display:block; }
+        .drop-title { font-size:12.5px; color:#1e40af; font-weight:600; margin:0; }
+        .drop-hint { font-size:10.5px; color:#94a3b8; margin:6px 0 0; }
+        .pending-list { margin-top:10px; display:flex; flex-direction:column; gap:6px; max-height:130px; overflow-y:auto; }
+        .pending-item { display:flex; align-items:center; gap:8px; background:#f8fafc; border:1px solid #eef2f7; border-radius:9px; padding:7px 9px; font-size:11.5px; color:#475569; }
+        .pending-item .name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .pending-item button { border:0; background:transparent; color:#94a3b8; padding:2px 4px; }
+        .pending-item button:hover { color:#ef4444; }
+        .btn-primary { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:40px; margin-top:10px; border:0; border-radius:11px; background:linear-gradient(135deg,#2563eb,#4f46e5); color:#fff; font-size:12.5px; font-weight:600; box-shadow:0 8px 18px rgba(37,99,235,.24); transition:all .18s ease; }
+        .btn-primary:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 10px 24px rgba(37,99,235,.3); }
+        .public-toggle { display:flex; align-items:center; gap:7px; margin-top:10px; font-size:11.5px; color:#475569; cursor:pointer; }
+        .public-toggle input { accent-color:var(--primary); width:13px; height:13px; }
+        .scan-hint { margin:10px 0 0; font-size:10.5px; line-height:1.5; color:#b45309; background:#fffbeb; border:1px solid #fef3c7; border-radius:8px; padding:7px 8px; }
+        .files-section { flex:1; min-height:260px; display:flex; flex-direction:column; border-bottom:0; }
+        .tabs { display:flex; gap:4px; background:#f1f5f9; border-radius:9px; padding:3px; margin-bottom:10px; }
+        .tab-btn { flex:1; border:0; background:transparent; border-radius:7px; padding:5px 8px; font-size:11px; color:#64748b; transition:all .16s; }
+        .tab-btn.active { background:#fff; color:#1d4ed8; font-weight:600; box-shadow:0 2px 7px rgba(15,23,42,.07); }
+        .file-list { flex:1; overflow-y:auto; min-height:80px; padding-right:2px; }
+        .file-item { display:flex; align-items:flex-start; gap:8px; border:1px solid transparent; border-radius:11px; padding:9px 8px; margin-bottom:5px; transition:all .16s; }
+        .file-item:hover { background:#f8fafc; border-color:#eef2f7; }
+        .file-item.active { background:#eff6ff; border-color:#bfdbfe; }
+        .file-main { flex:1; min-width:0; display:flex; gap:9px; cursor:pointer; }
+        .file-icon { width:28px; height:32px; display:flex; align-items:center; justify-content:center; font-size:17px; border-radius:6px; flex:none; }
+        .icon-pdf { color:#dc2626; background:#fef2f2; }
+        .icon-word { color:#2563eb; background:#eff6ff; }
+        .icon-ppt { color:#ea580c; background:#fff7ed; }
+        .icon-text { color:#475569; background:#f1f5f9; }
+        .file-meta { min-width:0; flex:1; }
+        .file-name { margin:0; font-size:11.5px; font-weight:600; color:#1e293b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.4; }
+        .file-sub { display:flex; align-items:center; flex-wrap:wrap; gap:4px; margin-top:3px; font-size:10px; color:#94a3b8; }
+        .status-dot { width:6px; height:6px; border-radius:50%; background:#cbd5e1; }
+        .status-dot.ready { background:#22c55e; }
+        .status-dot.processing { background:#f59e0b; animation:pulse 1.2s infinite; }
+        .status-dot.failed { background:#ef4444; }
+        .public-tag { font-size:9px; color:#7c3aed; background:#f5f3ff; padding:1px 4px; border-radius:4px; }
+        .file-error { margin:4px 0 0; font-size:9.5px; color:#dc2626; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .file-actions { display:flex; flex-direction:column; gap:1px; opacity:0; transition:opacity .15s; }
+        .file-item:hover .file-actions { opacity:1; }
+        .file-actions button { width:22px; height:20px; border:0; background:transparent; color:#94a3b8; font-size:11px; border-radius:5px; }
+        .file-actions button:hover { background:#e2e8f0; color:#1d4ed8; }
+        .file-actions button.danger:hover { background:#fee2e2; color:#dc2626; }
+        .empty-files { text-align:center; padding:24px 10px; color:#94a3b8; font-size:11px; line-height:1.6; }
+        .empty-files i { display:block; font-size:24px; color:#cbd5e1; margin-bottom:8px; }
+        .chat-panel { flex:1; min-width:0; display:flex; flex-direction:column; background:radial-gradient(1200px 500px at 50% -120px,#e8f0ff 0%,#f5f8fd 50%,#f5f8fd 100%); }
+        .chat-toolbar { height:58px; flex:0 0 58px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 22px; background:rgba(255,255,255,.8); border-bottom:1px solid #e8edf5; backdrop-filter:blur(12px); }
+        .chat-title { font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; }
+        .chat-title i { color:var(--primary); }
+        .chat-sub { font-size:10.5px; color:#94a3b8; }
+        .mode-chips { display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; }
+        .mode-chips::-webkit-scrollbar { display:none; }
+        .mode-chip { flex:none; border:1px solid #e2e8f0; background:#fff; color:#64748b; font-size:10.5px; border-radius:999px; padding:5px 10px; transition:all .16s; white-space:nowrap; }
+        .mode-chip:hover { border-color:#bfdbfe; color:#2563eb; }
+        .mode-chip.active { background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; font-weight:600; }
+        .messages { flex:1; min-height:0; overflow-y:auto; padding:26px 24px 10px; }
+        .messages-inner { max-width:920px; margin:0 auto; }
+        .welcome { text-align:center; padding:7vh 10px 20px; animation:fadeUp .35s ease; }
+        .welcome-icon { width:68px; height:68px; margin:0 auto 16px; border-radius:22px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:30px; background:linear-gradient(135deg,#2563eb,#4f46e5); box-shadow:0 18px 38px rgba(37,99,235,.28); }
+        .welcome h2 { margin:0; font-size:24px; letter-spacing:-.4px; }
+        .welcome p.lead { margin:9px auto 0; color:#64748b; font-size:12.5px; line-height:1.7; max-width:520px; }
+        .feature-row { display:flex; justify-content:center; flex-wrap:wrap; gap:7px; margin-top:14px; }
+        .feature-pill { font-size:10px; color:#475569; background:rgba(255,255,255,.8); border:1px solid #e2e8f0; border-radius:999px; padding:4px 9px; }
+        .feature-pill i { color:#2563eb; margin-right:3px; }
+        .suggestions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; max-width:660px; margin:26px auto 0; }
+        .suggestion { text-align:left; border:1px solid #e5ecf6; background:rgba(255,255,255,.9); border-radius:13px; padding:11px 13px; font-size:11.5px; color:#334155; transition:all .18s ease; line-height:1.5; }
+        .suggestion:hover { border-color:#bfdbfe; background:#fff; box-shadow:0 8px 24px rgba(37,99,235,.08); transform:translateY(-1px); }
+        .suggestion i { color:#3b82f6; margin-right:5px; }
+        .msg-row { display:flex; gap:10px; margin-bottom:22px; align-items:flex-start; animation:fadeUp .22s ease; }
+        .msg-row.user { justify-content:flex-end; }
+        .msg-avatar { width:32px; height:32px; border-radius:10px; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; margin-top:2px; }
+        .avatar-ai { background:linear-gradient(135deg,#dbeafe,#ede9fe); color:#1d4ed8; }
+        .avatar-user { background:linear-gradient(135deg,#2563eb,#4f46e5); color:#fff; }
+        .msg-content { max-width:min(760px,calc(100% - 48px)); min-width:0; }
+        .msg-row.user .msg-content { display:flex; flex-direction:column; align-items:flex-end; }
+        .bubble { padding:12px 16px; font-size:13px; line-height:1.75; word-break:break-word; }
+        .bubble.user { color:#fff; background:linear-gradient(135deg,#2563eb,#4f46e5); border-radius:16px 16px 5px 16px; box-shadow:0 8px 20px rgba(37,99,235,.2); }
+        .bubble.assistant { background:#fff; border:1px solid #edf2f8; border-radius:16px 16px 16px 5px; box-shadow:0 10px 28px rgba(15,23,42,.055); }
+        .bubble.error { border-color:#fecaca; background:#fff7f7; color:#b91c1c; }
+        .thinking { display:flex; align-items:center; gap:6px; color:#64748b; font-size:12px; }
+        .thinking span { width:5px; height:5px; border-radius:50%; background:#93c5fd; animation:blink 1.2s infinite; }
+        .thinking span:nth-child(2) { animation-delay:.2s; }
+        .thinking span:nth-child(3) { animation-delay:.4s; }
+        .md p { margin:0 0 8px; }
+        .md p:last-child { margin-bottom:0; }
+        .md strong { color:#1e3a8a; font-weight:700; }
+        .bubble.user .md strong { color:#fff; }
+        .md ul, .md ol { margin:5px 0 9px; padding-left:20px; }
+        .md li { margin:3px 0; }
+        .md h3, .md h4, .md h5 { margin:10px 0 6px; font-weight:700; color:#1e293b; }
+        .md h3 { font-size:15px; } .md h4 { font-size:14px; } .md h5 { font-size:13px; }
+        .md code { background:#f1f5f9; border-radius:4px; padding:1px 5px; font-size:11.5px; color:#be185d; }
+        .md pre { background:#0f172a; color:#e2e8f0; padding:12px; border-radius:10px; overflow-x:auto; margin:8px 0; }
+        .md pre code { background:transparent; color:inherit; padding:0; }
+        .md a { color:#2563eb; text-decoration:underline; }
+        .md .cite-ref { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:17px; padding:0 4px; margin:0 1px; border-radius:5px; background:#eff6ff; color:#1d4ed8; font-size:9px; font-weight:700; vertical-align:1px; }
+        .md-gap { height:4px; }
+        .msg-meta { margin-top:5px; font-size:9.5px; color:#94a3b8; display:flex; gap:8px; }
+        .sources { margin-top:7px; max-width:100%; }
+        .sources-toggle { display:inline-flex; align-items:center; gap:5px; border:1px solid #e2e8f0; background:#fff; color:#64748b; border-radius:8px; padding:4px 8px; font-size:10px; }
+        .sources-toggle:hover { border-color:#bfdbfe; color:#1d4ed8; }
+        .source-list { margin-top:7px; display:flex; flex-direction:column; gap:6px; }
+        .source-card { background:#f8fafc; border:1px solid #eef2f7; border-radius:9px; padding:8px 10px; }
+        .source-head { display:flex; align-items:center; gap:6px; font-size:10.5px; }
+        .source-index { width:17px; height:17px; border-radius:5px; background:#dbeafe; color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; flex:none; }
+        .source-name { font-weight:600; color:#334155; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .source-score { color:#10b981; font-size:9.5px; }
+        .source-snippet { margin:5px 0 0; font-size:10px; line-height:1.55; color:#64748b; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .focus-bar { max-width:920px; margin:0 auto 8px; display:flex; align-items:center; gap:8px; background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; padding:7px 11px; border-radius:9px; font-size:10.5px; }
+        .focus-bar .name { font-weight:700; max-width:360px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .focus-bar button { margin-left:auto; border:0; background:transparent; color:#60a5fa; font-size:14px; line-height:1; }
+        .composer-wrap { flex:none; padding:0 24px 16px; }
+        .composer { max-width:920px; margin:0 auto; background:#fff; border:1px solid #e2e8f0; border-radius:18px; box-shadow:0 10px 32px rgba(15,23,42,.08); padding:9px 9px 9px 16px; display:flex; align-items:flex-end; gap:8px; transition:border-color .18s,box-shadow .18s; }
+        .composer:focus-within { border-color:#bfdbfe; box-shadow:0 12px 36px rgba(37,99,235,.12); }
+        .composer textarea { flex:1; border:0; outline:none; resize:none; min-height:26px; max-height:150px; padding:7px 0; font-size:13px; line-height:1.65; color:#1e293b; background:transparent; }
+        .composer textarea::placeholder { color:#94a3b8; }
+        .send-btn { width:40px; height:40px; border-radius:12px; border:0; background:linear-gradient(135deg,#2563eb,#4f46e5); color:#fff; display:flex; align-items:center; justify-content:center; font-size:15px; box-shadow:0 6px 16px rgba(37,99,235,.25); transition:all .18s; flex:none; }
+        .send-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 8px 20px rgba(37,99,235,.32); }
+        .composer-foot { max-width:920px; margin:6px auto 0; display:flex; justify-content:space-between; gap:10px; font-size:9.5px; color:#94a3b8; padding:0 4px; }
+        .mobile-menu { display:none; width:34px; height:34px; border:1px solid rgba(255,255,255,.2); border-radius:9px; color:#fff; background:rgba(255,255,255,.08); font-size:15px; }
+        .sidebar-backdrop { display:none; }
+
+        .auth-layer { position:fixed; inset:0; z-index:100; overflow-y:auto; display:flex; align-items:center; justify-content:center; padding:22px; background:radial-gradient(900px 600px at 15% 10%,#1e3a8a,transparent 60%),radial-gradient(900px 700px at 90% 90%,#4c1d95,transparent 55%),linear-gradient(140deg,#070f2b,#101c43 45%,#1e1b4b); }
+        .auth-layer:before, .auth-layer:after { content:""; position:fixed; border-radius:50%; filter:blur(70px); opacity:.35; pointer-events:none; }
+        .auth-layer:before { width:380px; height:380px; background:#2563eb; top:-120px; right:-80px; }
+        .auth-layer:after { width:320px; height:320px; background:#7c3aed; bottom:-120px; left:-80px; }
+        .auth-card { position:relative; width:100%; max-width:420px; background:rgba(255,255,255,.98); border-radius:22px; box-shadow:0 30px 80px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.1); padding:30px 30px 24px; animation:fadeUp .35s ease; }
+        .auth-logo { width:52px; height:52px; border-radius:16px; background:linear-gradient(135deg,#2563eb,#4f46e5); color:#fff; display:flex; align-items:center; justify-content:center; font-size:24px; box-shadow:0 10px 24px rgba(37,99,235,.3); margin-bottom:16px; }
+        .auth-card h1 { margin:0; font-size:22px; letter-spacing:-.4px; }
+        .auth-card .sub { margin:7px 0 20px; font-size:11.5px; line-height:1.6; color:#64748b; }
+        .auth-tabs { display:flex; background:#f1f5f9; border-radius:10px; padding:3px; margin-bottom:18px; }
+        .auth-tab { flex:1; border:0; background:transparent; border-radius:8px; padding:8px; font-size:12px; color:#64748b; }
+        .auth-tab.active { background:#fff; color:#1d4ed8; font-weight:700; box-shadow:0 2px 8px rgba(15,23,42,.08); }
+        .field { display:block; margin-bottom:12px; }
+        .field span { display:block; font-size:10.5px; font-weight:600; color:#475569; margin-bottom:5px; }
+        .field input { width:100%; height:40px; border:1px solid #e2e8f0; border-radius:10px; padding:0 12px; font-size:12.5px; outline:none; background:#fbfdff; transition:all .16s; }
+        .field input:focus { border-color:#93c5fd; background:#fff; box-shadow:0 0 0 3px rgba(59,130,246,.09); }
+        .auth-error { background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; border-radius:8px; padding:7px 9px; font-size:10.5px; margin:0 0 10px; }
+        .auth-submit { width:100%; height:42px; border:0; border-radius:11px; background:linear-gradient(135deg,#2563eb,#4f46e5); color:#fff; font-size:13px; font-weight:700; box-shadow:0 10px 24px rgba(37,99,235,.25); transition:all .18s; }
+        .auth-submit:hover:not(:disabled) { transform:translateY(-1px); }
+        .auth-note { margin:14px 0 0; text-align:center; font-size:10px; color:#94a3b8; line-height:1.55; }
+        .modal-overlay { position:fixed; inset:0; z-index:120; background:rgba(15,23,42,.45); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:20px; }
+        .modal-card { width:100%; max-width:380px; background:#fff; border-radius:18px; padding:22px; box-shadow:0 30px 70px rgba(15,23,42,.3); animation:fadeUp .25s ease; }
+        .modal-card h3 { margin:0 0 4px; font-size:16px; }
+        .modal-card .hint { margin:0 0 16px; font-size:10.5px; color:#94a3b8; }
+        .modal-actions { display:flex; gap:8px; margin-top:16px; }
+        .btn-soft { flex:1; height:38px; border:1px solid #e2e8f0; background:#fff; border-radius:10px; font-size:12px; color:#475569; }
+        .btn-soft:hover { background:#f8fafc; }
+        .toast { position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:200; padding:10px 16px; border-radius:10px; font-size:12px; color:#fff; box-shadow:0 14px 36px rgba(15,23,42,.22); display:flex; align-items:center; gap:8px; max-width:min(92vw,520px); }
+        .toast.success { background:#16a34a; } .toast.error { background:#dc2626; } .toast.info { background:#2563eb; }
+        .toast-enter-active, .toast-leave-active { transition:all .22s ease; }
+        .toast-enter-from, .toast-leave-to { opacity:0; transform:translate(-50%,-8px); }
+
+        @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes blink { 0%,80%,100% { opacity:.25; transform:translateY(0); } 40% { opacity:1; transform:translateY(-2px); } }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+
+        @media (max-width:960px) {
+            .topbar { padding:0 14px; }
+            .mobile-menu { display:flex; align-items:center; justify-content:center; }
+            .tagline, .model-pill { display:none; }
+            .brand-title { font-size:15px; }
+            .brand-mark { width:36px; height:36px; font-size:17px; }
+            .btn-topbar span { display:none; }
+            .btn-topbar { width:34px; padding:0; justify-content:center; }
+            .sidebar { position:fixed; left:0; top:68px; bottom:0; width:310px; flex-basis:310px; transform:translateX(-105%); transition:transform .24s ease; box-shadow:16px 0 50px rgba(15,23,42,.18); }
+            .sidebar.open { transform:translateX(0); }
+            .sidebar-backdrop { display:block; position:fixed; inset:68px 0 0; background:rgba(15,23,42,.28); z-index:25; }
+            .chat-toolbar { padding:0 14px; height:auto; min-height:54px; flex-wrap:wrap; padding-top:8px; padding-bottom:8px; }
+            .chat-sub { display:none; }
+            .mode-chips { width:100%; }
+            .messages { padding:18px 13px 8px; }
+            .suggestions { grid-template-columns:1fr; }
+            .welcome { padding-top:4vh; }
+            .welcome h2 { font-size:20px; }
+            .composer-wrap { padding:0 10px 11px; }
+            .composer-foot { font-size:8.5px; }
+            .msg-content { max-width:calc(100% - 44px); }
+            .user-meta { display:none; }
+            .user-chip { padding:3px; }
+            .file-actions { opacity:1; }
+        }
+    </style>
+</head>
+<body><div id="app" v-cloak>
+    <!-- ===================== 登录 / 注册 ===================== -->
+    <div v-if="!auth.token" class="auth-layer">
+        <div class="auth-card">
+            <div class="auth-logo"><i class="fa fa-graduation-cap"></i></div>
+            <h1>校园知识库 <span style="color:#2563eb">AI 复习助手</span></h1>
+            <p class="sub">查校园事务、传学习资料、划重点、出题自测。<br/>所有回答严格基于你的知识库。</p>
+
+            <div class="auth-tabs">
+                <button class="auth-tab" :class="{active: authMode==='login'}" @click="switchAuth('login')">登录</button>
+                <button class="auth-tab" :class="{active: authMode==='register'}" @click="switchAuth('register')">注册</button>
+            </div>
+
+            <form @submit.prevent="submitAuth">
+                <label class="field">
+                    <span>用户名</span>
+                    <input v-model.trim="authForm.username" autocomplete="username" maxlength="32"
+                           placeholder="3-32 位字母、数字或下划线"/>
+                </label>
+                <label class="field" v-if="authMode==='register'">
+                    <span>昵称（可选）</span>
+                    <input v-model.trim="authForm.displayName" maxlength="40" placeholder="例如：小矿同学"/>
+                </label>
+                <label class="field">
+                    <span>密码</span>
+                    <input v-model="authForm.password" type="password" autocomplete="current-password"
+                           maxlength="128" placeholder="至少 8 位"/>
+                </label>
+                <p v-if="authError" class="auth-error"><i class="fa fa-exclamation-circle"></i> {{ authError }}</p>
+                <button class="auth-submit" type="submit" :disabled="authLoading">
+                    <i class="fa" :class="authLoading ? 'fa-spinner fa-spin' : (authMode==='login' ? 'fa-sign-in' : 'fa-user-plus')"></i>
+                    {{ authLoading ? '请稍候...' : (authMode==='login' ? '登录' : '注册并进入') }}
+                </button>
+            </form>
+            <p class="auth-note">学生可自主注册；管理员账号由部署者在环境变量中配置。</p>
+        </div>
+    </div>
+
+    <!-- ===================== 主界面 ===================== -->
+    <div v-else class="app-shell">
+        <header class="topbar">
+            <div class="flex items-center gap-3 min-w-0">
+                <button class="mobile-menu" @click="sidebarOpen=!sidebarOpen" aria-label="打开资料库">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <div class="brand-mark"><i class="fa fa-graduation-cap"></i></div>
+                <div class="min-w-0">
+                    <div class="brand-title">校园知识库 <span class="accent">AI 复习助手</span></div>
+                    <div class="tagline">校园事务查询 · 学习资料解析 · 划重点 · 自测复习</div>
+                </div>
+            </div>
+            <div class="top-actions">
+                <div class="model-pill" :title="health ? '对话模型：'+health.chatModel : ''">
+                    <span class="model-dot" :class="{bad: health && !health.chatConfigured}"></span>
+                    <span>{{ health ? health.chatModel : '连接中' }}</span>
+                </div>
+                <button class="btn-topbar" @click="newChat" title="新对话">
+                    <i class="fa fa-plus"></i><span>新对话</span>
+                </button>
+                <div class="user-menu" @click.stop>
+                    <button class="user-chip" @click="userMenuOpen=!userMenuOpen">
+                        <span class="avatar">{{ userInitial }}</span>
+                        <span class="user-meta">
+                            <span class="user-name">{{ auth.user.displayName }}</span>
+                            <span class="user-role">{{ isAdmin ? '管理员' : '学生' }}</span>
+                        </span>
+                        <i class="fa fa-angle-down" style="font-size:10px;color:rgba(255,255,255,.6)"></i>
+                    </button>
+                    <div v-if="userMenuOpen" class="dropdown">
+                        <div class="dropdown-head">
+                            <p style="margin:0;font-size:12px;font-weight:700">{{ auth.user.displayName }}</p>
+                            <p style="margin:3px 0 0;font-size:10px;color:#94a3b8">@{{ auth.user.username }} · {{ isAdmin ? '管理员' : '学生' }}</p>
+                        </div>
+                        <button class="dropdown-item" @click="openPasswordModal"><i class="fa fa-lock"></i> 修改密码</button>
+                        <button class="dropdown-item danger" @click="logout"><i class="fa fa-sign-out"></i> 退出登录</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="workspace">
+            <div v-if="sidebarOpen" class="sidebar-backdrop" @click="sidebarOpen=false"></div>
+
+            <aside class="sidebar" :class="{open: sidebarOpen}">
+                <div class="sidebar-scroll scroll-thin">
+                    <section class="side-section">
+                        <div class="side-title">
+                            <h2><i class="fa fa-cloud-upload"></i> 资料上传</h2>
+                            <span class="badge-soft">RAG</span>
+                        </div>
+                        <div class="dropzone" :class="{drag: dragActive}"
+                             @click="$refs.fileInput.click()"
+                             @dragover.prevent="dragActive=true"
+                             @dragleave.prevent="dragActive=false"
+                             @drop.prevent="onDrop">
+                            <input ref="fileInput" type="file" multiple style="display:none"
+                                   accept=".pdf,.docx,.ppt,.pptx,.txt,.md" @change="onFilePicked" @click.stop/>
+                            <i class="fa fa-cloud-upload drop-icon"></i>
+                            <p class="drop-title">拖拽文件到这里，或点击选择</p>
+                            <p class="drop-hint">支持 PDF / DOCX / PPT / PPTX / TXT / MD</p>
+                        </div>
+
+                        <div v-if="pendingFiles.length" class="pending-list scroll-thin">
+                            <div v-for="(f, i) in pendingFiles" :key="f.key" class="pending-item">
+                                <i class="fa" :class="fileIcon({filename:f.name})" :style="{color:typeColor(f.name)}"></i>
+                                <span class="name" :title="f.name">{{ f.name }}</span>
+                                <span style="font-size:9.5px;color:#94a3b8">{{ formatSize(f.size) }}</span>
+                                <button type="button" @click="removePending(i)" aria-label="移除"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+
+                        <label v-if="isAdmin" class="public-toggle">
+                            <input type="checkbox" v-model="uploadPublic"/>
+                            上传到公共知识库（所有学生可检索）
+                        </label>
+
+                        <button class="btn-primary" :disabled="!pendingFiles.length || uploading" @click="uploadAll">
+                            <i class="fa" :class="uploading ? 'fa-spinner fa-spin' : 'fa-upload'"></i>
+                            {{ uploading ? '正在上传解析...' : '确认上传入库' }}
+                        </button>
+                        <p class="scan-hint">⚠️扫描版图片PDF识别效果较差</p>
+                    </section>
+
+                    <section class="side-section files-section">
+                        <div class="side-title">
+                            <h2><i class="fa fa-folder-open-o"></i> 知识库文件</h2>
+                            <span class="badge-soft">{{ visibleFiles.length }}</span>
+                        </div>
+                        <div class="tabs">
+                            <button class="tab-btn" :class="{active: activeTab==='mine'}" @click="activeTab='mine'">我的资料</button>
+                            <button class="tab-btn" :class="{active: activeTab==='public'}" @click="activeTab='public'">公共资料</button>
+                        </div>
+                        <div class="file-list scroll-thin">
+                            <div v-for="file in visibleFiles" :key="file.id" class="file-item"
+                                 :class="{active: focusedFile && focusedFile.id===file.id}">
+                                <div class="file-main" @click="focusFile(file)">
+                                    <span class="file-icon" :class="typeClass(file)">
+                                        <i class="fa" :class="fileIcon(file)"></i>
+                                    </span>
+                                    <div class="file-meta">
+                                        <p class="file-name" :title="file.filename">{{ file.filename }}</p>
+                                        <div class="file-sub">
+                                            <span class="status-dot" :class="statusClass(file.status)"></span>
+                                            <span>{{ statusText(file.status) }}</span>
+                                            <span v-if="file.status==='READY'">· {{ file.chunkCount }} 片段</span>
+                                            <span v-if="file.visibility==='PUBLIC'" class="public-tag">公共</span>
+                                        </div>
+                                        <p v-if="file.status==='FAILED'" class="file-error">{{ file.errorMessage }}</p>
+                                    </div>
+                                </div>
+                                <div class="file-actions">
+                                    <button v-if="file.status==='READY'" title="总结" @click.stop="startReview(file,'summary')"><i class="fa fa-list-alt"></i></button>
+                                    <button v-if="file.status==='READY'" title="划重点" @click.stop="startReview(file,'keypoints')"><i class="fa fa-star"></i></button>
+                                    <button v-if="file.status==='READY'" title="出题" @click.stop="startReview(file,'quiz')"><i class="fa fa-pencil-square-o"></i></button>
+                                    <button title="下载" @click.stop="downloadFile(file)"><i class="fa fa-download"></i></button>
+                                    <button v-if="file.status==='FAILED' && canManage(file)" title="重新解析" @click.stop="reindexFile(file)"><i class="fa fa-refresh"></i></button>
+                                    <button v-if="canManage(file)" class="danger" title="删除" @click.stop="deleteFile(file)"><i class="fa fa-trash-o"></i></button>
+                                </div>
+                            </div>
+                            <div v-if="!visibleFiles.length" class="empty-files">
+                                <i class="fa fa-inbox"></i>
+                                {{ activeTab==='mine' ? '还没有上传资料，先传一份课件试试吧' : '公共知识库还没有内容' }}
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+            <main class="chat-panel">
+                <div class="chat-toolbar">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="chat-title"><i class="fa fa-comments-o"></i> 智能问答</span>
+                        <span class="chat-sub">严格依据知识库回答</span>
+                    </div>
+                    <div class="mode-chips">
+                        <button v-for="m in modes" :key="m.value" class="mode-chip"
+                                :class="{active: mode===m.value}" @click="mode=m.value">{{ m.label }}</button>
+                    </div>
+                </div>
+
+                <div ref="messagesEl" class="messages scroll-thin">
+                    <div class="messages-inner">
+                        <div v-if="!messages.length" class="welcome">
+                            <div class="welcome-icon"><i class="fa fa-graduation-cap"></i></div>
+                            <h2>今天想复习什么？</h2>
+                            <p class="lead">我可以查询校园制度与办事流程，也可以基于你上传的课件、笔记和复习资料，帮你总结、划重点、讲解知识点、出题自测。</p>
+                            <div class="feature-row">
+                                <span class="feature-pill"><i class="fa fa-shield"></i> 严格依托知识库</span>
+                                <span class="feature-pill"><i class="fa fa-lock"></i> 私有资料隔离</span>
+                                <span class="feature-pill"><i class="fa fa-file-text-o"></i> PDF / PPT / Word</span>
+                            </div>
+                            <div class="suggestions">
+                                <button v-for="s in suggestions" :key="s.text" class="suggestion" @click="askSuggestion(s)">
+                                    <i class="fa" :class="s.icon"></i>{{ s.text }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div v-for="(msg, idx) in messages" :key="idx" class="msg-row" :class="msg.role">
+                            <div v-if="msg.role==='assistant'" class="msg-avatar avatar-ai"><i class="fa fa-graduation-cap"></i></div>
+                            <div class="msg-content">
+                                <div class="bubble" :class="[msg.role, {error: msg.error}]">
+                                    <div v-if="msg.loading" class="thinking">
+                                        <span></span><span></span><span></span> 正在思考中...
+                                    </div>
+                                    <div v-else class="md" v-html="renderMarkdown(msg.content)"></div>
+                                </div>
+
+                                <div v-if="msg.citations && msg.citations.length" class="sources">
+                                    <button class="sources-toggle" @click="msg.showSources=!msg.showSources">
+                                        <i class="fa fa-book"></i>
+                                        引用来源 {{ msg.citations.length }}
+                                        <i class="fa" :class="msg.showSources ? 'fa-angle-up' : 'fa-angle-down'"></i>
+                                    </button>
+                                    <div v-if="msg.showSources" class="source-list">
+                                        <div v-for="c in msg.citations" :key="c.index" class="source-card">
+                                            <div class="source-head">
+                                                <span class="source-index">{{ c.index }}</span>
+                                                <span class="source-name" :title="c.filename">{{ c.filename }}</span>
+                                                <span class="source-score">{{ Math.round((c.score || 0) * 100) }}%</span>
+                                            </div>
+                                            <p class="source-snippet">{{ c.snippet }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div v-if="msg.role==='assistant' && !msg.loading" class="msg-meta">
+                                    <span v-if="msg.modeLabel">{{ msg.modeLabel }}</span>
+                                    <span v-if="msg.latency">耗时 {{ (msg.latency/1000).toFixed(1) }}s</span>
+                                    <span>请核对原始资料</span>
+                                </div>
+                            </div>
+                            <div v-if="msg.role==='user'" class="msg-avatar avatar-user">{{ userInitial }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="composer-wrap">
+                    <div v-if="focusedFile" class="focus-bar">
+                        <i class="fa fa-crosshairs"></i>
+                        <span>正在针对</span>
+                        <span class="name">{{ focusedFile.filename }}</span>
+                        <span>回答</span>
+                        <button @click="focusedFile=null" title="取消聚焦">×</button>
+                    </div>
+                    <div class="composer">
+                        <textarea ref="inputEl" v-model="question" rows="1"
+                                  :disabled="sending" :placeholder="composerPlaceholder"
+                                  @input="autoGrow"
+                                  @keydown.enter.exact.prevent="send"></textarea>
+                        <button class="send-btn" :disabled="sending || !question.trim()" @click="send" aria-label="发送">
+                            <i class="fa" :class="sending ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+                        </button>
+                    </div>
+                    <div class="composer-foot">
+                        <span>Enter 发送 · Shift + Enter 换行</span>
+                        <span>内容由 AI 生成，请核对原始资料</span>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div v-if="passwordModal" class="modal-overlay" @click.self="passwordModal=false">
+        <div class="modal-card">
+            <h3>修改密码</h3>
+            <p class="hint">默认管理员密码仅用于首次演示，请尽快修改。</p>
+            <form @submit.prevent="submitPassword">
+                <label class="field"><span>原密码</span><input v-model="passwordForm.old" type="password" required/></label>
+                <label class="field"><span>新密码</span><input v-model="passwordForm.new" type="password" minlength="8" required/></label>
+                <label class="field"><span>确认新密码</span><input v-model="passwordForm.confirm" type="password" minlength="8" required/></label>
+                <p v-if="passwordError" class="auth-error">{{ passwordError }}</p>
+                <div class="modal-actions">
+                    <button type="button" class="btn-soft" @click="passwordModal=false">取消</button>
+                    <button type="submit" class="auth-submit" style="flex:1;height:38px" :disabled="passwordLoading">
+                        {{ passwordLoading ? '保存中...' : '确认修改' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <transition name="toast">
+        <div v-if="toast" class="toast" :class="toast.type">
+            <i class="fa" :class="toast.type==='success' ? 'fa-check-circle' : (toast.type==='error' ? 'fa-exclamation-circle' : 'fa-info-circle')"></i>
+            {{ toast.text }}
+        </div>
+    </transition>
+</div>
+<script>
+    const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8080' : '';
+
+    function loadStoredUser() {
+        try {
+            return JSON.parse(localStorage.getItem('campus_user') || 'null');
+        } catch (e) {
+            return null;
+        }
+    }
+
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            const storedUser = loadStoredUser();
+            const storedToken = storedUser ? (localStorage.getItem('campus_token') || '') : '';
+            return {
+                API_BASE,
+                auth: {
+                    token: storedToken,
+                    user: storedUser
+                },
+                authMode: 'login',
+                authForm: { username: '', password: '', displayName: '' },
+                authLoading: false,
+                authError: '',
+                health: null,
+                myFiles: [],
+                publicFiles: [],
+                activeTab: 'mine',
+                pendingFiles: [],
+                uploading: false,
+                uploadPublic: false,
+                dragActive: false,
+                focusedFile: null,
+                mode: 'qa',
+                messages: [],
+                question: '',
+                sending: false,
+                conversationId: null,
+                sidebarOpen: false,
+                userMenuOpen: false,
+                passwordModal: false,
+                passwordForm: { old: '', new: '', confirm: '' },
+                passwordError: '',
+                passwordLoading: false,
+                toast: null,
+                toastTimer: null,
+                pollTimer: null,
+                modes: [
+                    { value: 'qa', label: '问答' },
+                    { value: 'summary', label: '总结' },
+                    { value: 'keypoints', label: '划重点' },
+                    { value: 'explain', label: '讲解' },
+                    { value: 'quiz', label: '出题' },
+                    { value: 'integrate', label: '整合' }
+                ],
+                suggestions: [
+                    { icon: 'fa-university', text: '国家励志奖学金需要什么条件？' },
+                    { icon: 'fa-book', text: '图书馆的开放时间是怎样的？' },
+                    { icon: 'fa-credit-card', text: '校园卡丢失后如何补办？' },
+                    { icon: 'fa-graduation-cap', text: '本科生毕业需要满足哪些学分要求？' }
+                ]
+            };
+        },
+        computed: {
+            isAdmin() {
+                return this.auth.user && this.auth.user.role === 'ADMIN';
+            },
+            userInitial() {
+                const name = (this.auth.user && (this.auth.user.displayName || this.auth.user.username)) || '?';
+                return name.trim().charAt(0).toUpperCase();
+            },
+            visibleFiles() {
+                return this.activeTab === 'mine' ? this.myFiles : this.publicFiles;
+            },
+            hasProcessing() {
+                return [...this.myFiles, ...this.publicFiles].some(
+                    f => f.status === 'PENDING' || f.status === 'PROCESSING');
+            },
+            composerPlaceholder() {
+                if (this.focusedFile) {
+                    return '针对《' + this.focusedFile.filename + '》提问，例如：帮我划重点';
+                }
+                return '输入校园事务问题，或上传资料后让我总结、划重点、出题...';
+            }
+        },
+        mounted() {
+            this.loadHealth();
+            if (this.auth.token && this.auth.user) {
+                this.bootstrap();
+            } else {
+                this.auth.token = '';
+            }
+            this._closeMenu = () => { this.userMenuOpen = false; };
+            document.addEventListener('click', this._closeMenu);
+            this.pollTimer = setInterval(() => {
+                if (this.auth.token && this.hasProcessing) {
+                    this.loadFiles(true);
+                }
+            }, 3000);
+        },
+        beforeUnmount() {
+            document.removeEventListener('click', this._closeMenu);
+            clearInterval(this.pollTimer);
+            clearTimeout(this.toastTimer);
+        },
+        methods: {
+            async rawFetch(path, options = {}) {
+                return fetch(this.API_BASE + path, options);
+            },
+            async api(path, options = {}) {
+                const headers = Object.assign({}, options.headers || {});
+                if (this.auth.token) {
+                    headers['Authorization'] = 'Bearer ' + this.auth.token;
+                }
+                if (options.body && !(options.body instanceof FormData)) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                const response = await this.rawFetch(path, Object.assign({}, options, { headers }));
+                if (response.status === 401) {
+                    this.logout();
+                    throw new Error('登录已过期，请重新登录');
+                }
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.message || data.error || ('请求失败（' + response.status + '）'));
+                }
+                return data;
+            },
+            async loadHealth() {
+                try {
+                    const response = await this.rawFetch('/api/health');
+                    if (response.ok) {
+                        this.health = await response.json();
+                    }
+                } catch (e) {
+                    this.health = null;
+                }
+            },
+            async bootstrap() {
+                try {
+                    const me = await this.api('/api/auth/me');
+                    this.auth.user = me;
+                    localStorage.setItem('campus_user', JSON.stringify(me));
+                    await this.loadFiles();
+                } catch (e) {
+                    if (this.auth.token) {
+                        this.logout();
+                    }
+                }
+            },
+            switchAuth(mode) {
+                this.authMode = mode;
+                this.authError = '';
+            },
+            async submitAuth() {
+                this.authError = '';
+                if (!this.authForm.username || !this.authForm.password) {
+                    this.authError = '请填写用户名和密码';
+                    return;
+                }
+                this.authLoading = true;
+                try {
+                    const path = this.authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+                    const body = this.authMode === 'login'
+                        ? { username: this.authForm.username, password: this.authForm.password }
+                        : {
+                            username: this.authForm.username,
+                            password: this.authForm.password,
+                            displayName: this.authForm.displayName || undefined
+                        };
+                    const response = await this.rawFetch(path, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        throw new Error(data.message || '登录失败，请检查账号密码');
+                    }
+                    this.auth = { token: data.token, user: data.user };
+                    localStorage.setItem('campus_token', data.token);
+                    localStorage.setItem('campus_user', JSON.stringify(data.user));
+                    this.authForm = { username: '', password: '', displayName: '' };
+                    this.messages = [];
+                    this.conversationId = null;
+                    this.focusedFile = null;
+                    this.notify('欢迎回来，' + (data.user.displayName || data.user.username), 'success');
+                    await this.loadFiles();
+                } catch (e) {
+                    this.authError = e.message || '登录失败';
+                } finally {
+                    this.authLoading = false;
+                }
+            },
+            logout() {
+                localStorage.removeItem('campus_token');
+                localStorage.removeItem('campus_user');
+                this.auth = { token: '', user: null };
+                this.myFiles = [];
+                this.publicFiles = [];
+                this.messages = [];
+                this.conversationId = null;
+                this.focusedFile = null;
+                this.pendingFiles = [];
+                this.userMenuOpen = false;
+            },
+            async loadFiles(silent = false) {
+                if (!this.auth.token) {
+                    return;
+                }
+                try {
+                    const [mine, publicList] = await Promise.all([
+                        this.api('/api/file/myList'),
+                        this.api('/api/file/publicList')
+                    ]);
+                    this.myFiles = mine || [];
+                    this.publicFiles = publicList || [];
+                    if (this.focusedFile) {
+                        const all = [...this.myFiles, ...this.publicFiles];
+                        const fresh = all.find(f => f.id === this.focusedFile.id);
+                        this.focusedFile = fresh || null;
+                    }
+                } catch (e) {
+                    if (!silent) {
+                        this.notify(e.message, 'error');
+                    }
+                }
+            },            onFilePicked(event) {
+                this.addPending(Array.from(event.target.files || []));
+                event.target.value = '';
+            },
+            onDrop(event) {
+                this.dragActive = false;
+                this.addPending(Array.from(event.dataTransfer.files || []));
+            },
+            addPending(files) {
+                const allowed = ['.pdf', '.docx', '.ppt', '.pptx', '.txt', '.md'];
+                const existing = new Set(this.pendingFiles.map(f => f.name + '_' + f.size));
+                let added = 0;
+                files.forEach(file => {
+                    const dot = file.name.lastIndexOf('.');
+                    const ext = dot >= 0 ? file.name.slice(dot).toLowerCase() : '';
+                    if (!allowed.includes(ext)) {
+                        this.notify('不支持的文件类型：' + file.name, 'error');
+                        return;
+                    }
+                    const key = file.name + '_' + file.size;
+                    if (existing.has(key)) {
+                        return;
+                    }
+                    existing.add(key);
+                    this.pendingFiles.push({ key, name: file.name, size: file.size, file });
+                    added++;
+                });
+                if (added) {
+                    this.notify('已选择 ' + added + ' 个文件，点击「确认上传入库」开始解析', 'info');
+                }
+            },
+            removePending(index) {
+                this.pendingFiles.splice(index, 1);
+            },
+            async uploadAll() {
+                if (!this.pendingFiles.length || this.uploading) {
+                    return;
+                }
+                this.uploading = true;
+                let success = 0;
+                const failed = [];
+                for (const item of [...this.pendingFiles]) {
+                    try {
+                        const form = new FormData();
+                        form.append('file', item.file);
+                        if (this.isAdmin && this.uploadPublic) {
+                            form.append('visibility', 'public');
+                        }
+                        const data = await this.api('/api/file/upload', { method: 'POST', body: form });
+                        success++;
+                        this.pendingFiles = this.pendingFiles.filter(f => f.key !== item.key);
+                        if (data.message) {
+                            this.notify(data.message, 'success');
+                        }
+                    } catch (e) {
+                        failed.push(item.name + '：' + e.message);
+                    }
+                }
+                this.uploading = false;
+                await this.loadFiles();
+                if (failed.length) {
+                    this.notify('部分文件上传失败：' + failed[0], 'error');
+                } else if (success) {
+                    this.notify('文件已提交，正在后台解析入库', 'success');
+                }
+            },
+            focusFile(file) {
+                if (file.status !== 'READY') {
+                    this.notify(file.status === 'FAILED'
+                        ? '该资料解析失败，请删除后重新上传'
+                        : '资料正在解析中，请稍候', 'info');
+                    return;
+                }
+                this.focusedFile = (this.focusedFile && this.focusedFile.id === file.id) ? null : file;
+                if (window.innerWidth <= 960) {
+                    this.sidebarOpen = false;
+                }
+            },
+            async reindexFile(file) {
+                try {
+                    await this.api('/api/file/' + file.id + '/reindex', { method: 'POST' });
+                    this.notify('已提交重新解析', 'success');
+                    await this.loadFiles();
+                } catch (e) {
+                    this.notify(e.message, 'error');
+                }
+            },
+            async deleteFile(file) {
+                if (!window.confirm('确定删除《' + file.filename + '》吗？删除后向量索引也会清除。')) {
+                    return;
+                }
+                try {
+                    await this.api('/api/file/' + file.id, { method: 'DELETE' });
+                    if (this.focusedFile && this.focusedFile.id === file.id) {
+                        this.focusedFile = null;
+                    }
+                    this.notify('已删除', 'success');
+                    await this.loadFiles();
+                } catch (e) {
+                    this.notify(e.message, 'error');
+                }
+            },
+            async downloadFile(file) {
+                try {
+                    const response = await this.rawFetch('/api/file/' + file.id + '/download', {
+                        headers: { 'Authorization': 'Bearer ' + this.auth.token }
+                    });
+                    if (!response.ok) {
+                        const data = await response.json().catch(() => ({}));
+                        throw new Error(data.message || '下载失败');
+                    }
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = file.filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    this.notify(e.message, 'error');
+                }
+            },
+            startReview(file, mode) {
+                if (file.status !== 'READY') {
+                    this.notify('资料尚未解析完成', 'info');
+                    return;
+                }
+                this.focusedFile = file;
+                this.mode = mode;
+                const prompts = {
+                    summary: '请总结《' + file.filename + '》的核心内容和整体框架',
+                    keypoints: '请提炼《' + file.filename + '》的复习重点和背诵提纲',
+                    quiz: '请根据《' + file.filename + '》出几道自测题（单选+简答），并给出答案和思路',
+                    explain: '请讲解《' + file.filename + '》中的重点概念'
+                };
+                this.question = prompts[mode] || ('请帮我复习《' + file.filename + '》');
+                if (window.innerWidth <= 960) {
+                    this.sidebarOpen = false;
+                }
+                this.$nextTick(() => {
+                    this.autoGrow();
+                    this.send();
+                });
+            },
+            askSuggestion(suggestion) {
+                this.question = suggestion.text;
+                this.send();
+            },
+            async send() {
+                const text = this.question.trim();
+                if (!text || this.sending) {
+                    return;
+                }
+                this.sending = true;
+                this.messages.push({ role: 'user', content: text, citations: [] });
+                this.question = '';
+                this.$nextTick(() => this.autoGrow());
+                const assistant = {
+                    role: 'assistant',
+                    content: '',
+                    citations: [],
+                    loading: true,
+                    modeLabel: this.modeLabel(this.mode)
+                };
+                this.messages.push(assistant);
+                this.scrollBottom();
+                try {
+                    const data = await this.api('/api/chat/ask', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            userId: this.auth.user.id,
+                            question: text,
+                            conversationId: this.conversationId,
+                            mode: this.mode,
+                            fileIds: this.focusedFile ? [this.focusedFile.id] : null
+                        })
+                    });
+                    this.conversationId = data.conversationId;
+                    assistant.content = data.answer || '模型没有返回内容。';
+                    assistant.citations = data.citations || [];
+                    assistant.loading = false;
+                    assistant.latency = data.latencyMs;
+                    assistant.modeLabel = this.modeLabel(data.mode || this.mode);
+                } catch (e) {
+                    assistant.content = e.message || '请求失败，请稍后重试。';
+                    assistant.loading = false;
+                    assistant.error = true;
+                    this.notify(e.message, 'error');
+                } finally {
+                    this.sending = false;
+                    this.scrollBottom();
+                }
+            },
+            newChat() {
+                this.messages = [];
+                this.conversationId = null;
+                this.focusedFile = null;
+                this.mode = 'qa';
+                this.question = '';
+                this.$nextTick(() => {
+                    this.autoGrow();
+                    this.scrollBottom();
+                });
+            },
+            autoGrow() {
+                const el = this.$refs.inputEl;
+                if (!el) {
+                    return;
+                }
+                el.style.height = 'auto';
+                el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+            },
+            scrollBottom() {
+                this.$nextTick(() => {
+                    const el = this.$refs.messagesEl;
+                    if (el) {
+                        el.scrollTop = el.scrollHeight;
+                    }
+                });
+            },
+            modeLabel(mode) {
+                const found = this.modes.find(m => m.value === mode);
+                return found ? found.label : '问答';
+            },            fileIcon(file) {
+                const name = (file.filename || '').toLowerCase();
+                if (name.endsWith('.pdf')) return 'fa-file-pdf-o';
+                if (name.endsWith('.doc') || name.endsWith('.docx')) return 'fa-file-word-o';
+                if (name.endsWith('.ppt') || name.endsWith('.pptx')) return 'fa-file-powerpoint-o';
+                return 'fa-file-text-o';
+            },
+            typeClass(file) {
+                const name = (file.filename || '').toLowerCase();
+                if (name.endsWith('.pdf')) return 'icon-pdf';
+                if (name.endsWith('.doc') || name.endsWith('.docx')) return 'icon-word';
+                if (name.endsWith('.ppt') || name.endsWith('.pptx')) return 'icon-ppt';
+                return 'icon-text';
+            },
+            typeColor(name) {
+                const lower = (name || '').toLowerCase();
+                if (lower.endsWith('.pdf')) return '#dc2626';
+                if (lower.endsWith('.doc') || lower.endsWith('.docx')) return '#2563eb';
+                if (lower.endsWith('.ppt') || lower.endsWith('.pptx')) return '#ea580c';
+                return '#64748b';
+            },
+            statusText(status) {
+                return { PENDING: '排队中', PROCESSING: '解析中', READY: '已入库', FAILED: '解析失败' }[status] || status;
+            },
+            statusClass(status) {
+                return { READY: 'ready', PROCESSING: 'processing', PENDING: 'processing', FAILED: 'failed' }[status] || '';
+            },
+            formatSize(size) {
+                if (!size) return '0 B';
+                if (size < 1024) return size + ' B';
+                if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+                return (size / 1024 / 1024).toFixed(1) + ' MB';
+            },
+            canManage(file) {
+                return this.auth.user && (file.ownerId === this.auth.user.id || this.isAdmin);
+            },
+            notify(text, type = 'info') {
+                this.toast = { text, type };
+                clearTimeout(this.toastTimer);
+                this.toastTimer = setTimeout(() => { this.toast = null; }, 3200);
+            },
+            openPasswordModal() {
+                this.userMenuOpen = false;
+                this.passwordForm = { old: '', new: '', confirm: '' };
+                this.passwordError = '';
+                this.passwordModal = true;
+            },
+            async submitPassword() {
+                this.passwordError = '';
+                if (this.passwordForm.new.length < 8) {
+                    this.passwordError = '新密码至少 8 位';
+                    return;
+                }
+                if (this.passwordForm.new !== this.passwordForm.confirm) {
+                    this.passwordError = '两次输入的新密码不一致';
+                    return;
+                }
+                this.passwordLoading = true;
+                try {
+                    const data = await this.api('/api/auth/change-password', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            oldPassword: this.passwordForm.old,
+                            newPassword: this.passwordForm.new
+                        })
+                    });
+                    this.passwordModal = false;
+                    this.notify(data.message || '密码修改成功', 'success');
+                } catch (e) {
+                    this.passwordError = e.message;
+                } finally {
+                    this.passwordLoading = false;
+                }
+            },
+            escapeHtml(text) {
+                return (text || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            },
+            renderMarkdown(text) {
+                if (!text) return '';
+                let value = this.escapeHtml(text);
+                const codeBlocks = [];
+                value = value.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (match, code) => {
+                    codeBlocks.push('<pre><code>' + code.replace(/\n$/, '') + '</code></pre>');
+                    return '@@CODE' + (codeBlocks.length - 1) + '@@';
+                });
+                value = value.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+                value = value.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                value = value.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+                    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+                value = value.replace(/^###\s+(.+)$/gm, '<h5>$1</h5>');
+                value = value.replace(/^##\s+(.+)$/gm, '<h4>$1</h4>');
+                value = value.replace(/^#\s+(.+)$/gm, '<h3>$1</h3>');
+
+                const lines = value.split(/\r?\n/);
+                const html = [];
+                let listType = null;
+                const closeList = () => {
+                    if (listType) {
+                        html.push('</' + listType + '>');
+                        listType = null;
+                    }
+                };
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+                    const bullet = trimmed.match(/^[-*]\s+(.+)$/);
+                    const ordered = trimmed.match(/^\d+[.)]\s+(.+)$/);
+                    if (bullet) {
+                        if (listType !== 'ul') { closeList(); html.push('<ul>'); listType = 'ul'; }
+                        html.push('<li>' + bullet[1] + '</li>');
+                    } else if (ordered) {
+                        if (listType !== 'ol') { closeList(); html.push('<ol>'); listType = 'ol'; }
+                        html.push('<li>' + ordered[1] + '</li>');
+                    } else {
+                        closeList();
+                        if (!trimmed) {
+                            html.push('<div class="md-gap"></div>');
+                        } else {
+                            html.push('<p>' + line + '</p>');
+                        }
+                    }
+                });
+                closeList();
+                let result = html.join('');
+                result = result.replace(/\[(\d+)\]/g, '<span class="cite-ref">[$1]</span>');
+                codeBlocks.forEach((block, index) => {
+                    result = result.replace('@@CODE' + index + '@@', block);
+                });
+                return result;
+            }
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
