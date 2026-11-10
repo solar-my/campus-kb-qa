@@ -290,6 +290,7 @@ mvn test
     ├── ARCHITECTURE.md
     ├── DEPLOY.md
     ├── IDE_SETUP.md
+    ├── 代码详解.md      # 后端每个类/每个方法的说明
     └── 需求对照.md
 ```
 

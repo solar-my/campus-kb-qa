@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"/>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
     <style>
         :root { --primary:#2563eb; --primary-dark:#1d4ed8; --violet:#4f46e5; --ink:#0f172a; --muted:#64748b; --line:#e8edf5; --soft:#f5f8fd; }
         * { box-sizing:border-box; }
@@ -152,6 +155,8 @@
         .md pre code { background:transparent; color:inherit; padding:0; }
         .md a { color:#2563eb; text-decoration:underline; }
         .md .cite-ref { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:17px; padding:0 4px; margin:0 1px; border-radius:5px; background:#eff6ff; color:#1d4ed8; font-size:9px; font-weight:700; vertical-align:1px; }
+        .md .katex { font-size:1.02em; }
+        .md .katex-display { margin:.45em 0; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
         .md-gap { height:4px; }
         .msg-meta { margin-top:5px; font-size:9.5px; color:#94a3b8; display:flex; gap:8px; }
         .sources { margin-top:7px; max-width:100%; }
@@ -943,6 +948,7 @@
                     assistant.loading = false;
                     assistant.latency = data.latencyMs;
                     assistant.modeLabel = this.modeLabel(data.mode || this.mode);
+                    this.$nextTick(() => this.renderMath());
                 } catch (e) {
                     assistant.content = e.message || '请求失败，请稍后重试。';
                     assistant.loading = false;
@@ -1057,6 +1063,39 @@
                     this.passwordLoading = false;
                 }
             },
+            latexToPlain(text) {
+                return (text || '')
+                    .replace(/\$\$([\s\S]*?)\$\$/g, '$1')
+                    .replace(/\$([^$\n]+)\$/g, '$1')
+                    .replace(/\\\[/g, '').replace(/\\\]/g, '')
+                    .replace(/\\\(/g, '').replace(/\\\)/g, '')
+                    .replace(/\s*\\pmod\{([^{}]+)\}/g, ' (mod $1)')
+                    .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1)/($2)')
+                    .replace(/\\equiv/g, '≡').replace(/\\mid/g, '|').replace(/\\nmid/g, '∤')
+                    .replace(/\\gcd/g, 'gcd').replace(/\\neq/g, '≠')
+                    .replace(/\\times/g, '×').replace(/\\div/g, '÷')
+                    .replace(/\\leq/g, '≤').replace(/\\geq/g, '≥')
+                    .replace(/\\sum/g, 'Σ').replace(/\\%/g, '%')
+                    .replace(/\\[a-zA-Z]+/g, '');
+            },
+            renderMath() {
+                if (typeof renderMathInElement !== 'function') return;
+                this.$el.querySelectorAll('.md').forEach(el => {
+                    try {
+                        renderMathInElement(el, {
+                            delimiters: [
+                                { left: '$$', right: '$$', display: true },
+                                { left: '$', right: '$', display: false },
+                                { left: '\\[', right: '\\]', display: true },
+                                { left: '\\(', right: '\\)', display: false }
+                            ],
+                            throwOnError: false
+                        });
+                    } catch (e) {
+                        console.warn('KaTeX 渲染失败', e);
+                    }
+                });
+            },
             escapeHtml(text) {
                 return (text || '')
                     .replace(/&/g, '&amp;')
@@ -1067,6 +1106,10 @@
             },
             renderMarkdown(text) {
                 if (!text) return '';
+                // KaTeX 没加载成功（离线 / CDN 不可达）时，把 LaTeX 源码降级成可读的纯文本
+                if (typeof renderMathInElement !== 'function') {
+                    text = this.latexToPlain(text);
+                }
                 let value = this.escapeHtml(text);
                 const codeBlocks = [];
                 value = value.replace(/```[a-zA-Z]*\n([\s\S]*?)```/g, (match, code) => {
