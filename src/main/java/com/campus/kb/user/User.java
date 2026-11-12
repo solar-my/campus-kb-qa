@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-
+//数据库实体
 @Entity
 @Table(name = "users", indexes = {
         @Index(name = "idx_users_username", columnList = "username", unique = true)

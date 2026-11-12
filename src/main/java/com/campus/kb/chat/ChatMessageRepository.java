@@ -8,6 +8,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     List<ChatMessage> findTop12ByConversationIdOrderByIdDesc(Long conversationId);
 
+    List<ChatMessage> findByConversationIdOrderByIdAsc(Long conversationId);
+
     long countByConversationId(Long conversationId);
 
     void deleteByConversationId(Long conversationId);

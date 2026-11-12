@@ -3,6 +3,8 @@ package com.campus.kb.chat;
 import com.campus.kb.auth.UserPrincipal;
 import com.campus.kb.chat.ChatDtos.ChatRequest;
 import com.campus.kb.chat.ChatDtos.ChatResponse;
+import com.campus.kb.chat.ChatDtos.ConversationDto;
+import com.campus.kb.chat.ChatDtos.ConversationMessageDto;
 import com.campus.kb.common.BizException;
 import com.campus.kb.config.AppProperties;
 import com.campus.kb.file.FileService;
@@ -10,6 +12,7 @@ import com.campus.kb.file.FileStatus;
 import com.campus.kb.file.KnowledgeFile;
 import com.campus.kb.rag.VectorStoreService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatModel;
@@ -18,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -134,6 +138,60 @@ public class ChatService {
         long latency = System.currentTimeMillis() - started;
         return new ChatResponse(conversation.getId(), saved.getId(), answer,
                 prompt.citations(), mode.name().toLowerCase(Locale.ROOT), latency);
+    }
+
+    /**
+     * 当前用户的会话列表，按最近更新时间倒序。
+     */
+    public List<ConversationDto> listConversations(UserPrincipal principal) {
+        return conversationRepository.findByUserIdOrderByUpdatedAtDesc(principal.id()).stream()
+                .map(conversation -> new ConversationDto(
+                        conversation.getId(),
+                        conversation.getTitle(),
+                        messageRepository.countByConversationId(conversation.getId()),
+                        conversation.getUpdatedAt()))
+                .toList();
+    }
+
+    /**
+     * 某个会话的全部消息（正序），用于前端切换历史会话。
+     */
+    public List<ConversationMessageDto> conversationMessages(Long conversationId, UserPrincipal principal) {
+        conversationRepository.findByIdAndUserId(conversationId, principal.id())
+                .orElseThrow(() -> new BizException(HttpStatus.NOT_FOUND, "会话不存在或已删除"));
+        return messageRepository.findByConversationIdOrderByIdAsc(conversationId).stream()
+                .map(message -> new ConversationMessageDto(
+                        message.getId(),
+                        message.getRole().name(),
+                        message.getContent(),
+                        parseCitations(message.getCitationsJson()),
+                        message.getCreatedAt()))
+                .toList();
+    }
+
+    /**
+     * 删除会话及其全部消息（先删消息，再删会话，避免留下孤儿记录）。
+     */
+    @Transactional
+    public void deleteConversation(Long conversationId, UserPrincipal principal) {
+        ChatConversation conversation = conversationRepository
+                .findByIdAndUserId(conversationId, principal.id())
+                .orElseThrow(() -> new BizException(HttpStatus.NOT_FOUND, "会话不存在或已删除"));
+        messageRepository.deleteByConversationId(conversationId);
+        conversationRepository.delete(conversation);
+    }
+
+    private List<Citation> parseCitations(String citationsJson) {
+        if (citationsJson == null || citationsJson.isBlank()) {
+            return List.of();
+        }
+        try {
+            return objectMapper.readValue(citationsJson, new TypeReference<List<Citation>>() {
+            });
+        } catch (JsonProcessingException e) {
+            log.warn("解析引用 JSON 失败，已忽略：{}", e.getMessage());
+            return List.of();
+        }
     }
 
     private ChatConversation resolveConversation(UserPrincipal principal, Long conversationId,

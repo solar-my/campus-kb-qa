@@ -183,6 +183,33 @@
         .mobile-menu { display:none; width:34px; height:34px; border:1px solid rgba(255,255,255,.2); border-radius:9px; color:#fff; background:rgba(255,255,255,.08); font-size:15px; }
         .sidebar-backdrop { display:none; }
 
+        /* 右侧会话列表 */
+        .conv-panel { width:260px; flex:0 0 260px; min-height:0; display:flex; flex-direction:column; background:#fff; border-left:1px solid var(--line); z-index:30; }
+        .conv-head { display:flex; align-items:center; justify-content:space-between; padding:16px 14px 10px; border-bottom:1px solid #f1f5f9; }
+        .conv-head h2 { margin:0; font-size:12px; color:#334155; display:flex; align-items:center; gap:6px; letter-spacing:.2px; }
+        .conv-list { flex:1; min-height:0; overflow-y:auto; padding:8px; }
+        .conv-item { display:flex; align-items:flex-start; gap:6px; padding:9px 10px; border:1px solid transparent; border-radius:10px; cursor:pointer; transition:background .15s,border-color .15s; }
+        .conv-item:hover { background:#f8fafc; border-color:#eef2f7; }
+        .conv-item.active { background:#eff6ff; border-color:#bfdbfe; }
+        .conv-main { flex:1; min-width:0; }
+        .conv-title { margin:0; font-size:11.5px; font-weight:600; color:#334155; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .conv-sub { margin:3px 0 0; font-size:9.5px; color:#94a3b8; }
+        .conv-del { border:0; background:transparent; color:#cbd5e1; font-size:11px; padding:2px; opacity:0; transition:opacity .15s,color .15s; flex:none; }
+        .conv-item:hover .conv-del { opacity:1; }
+        .conv-del:hover { color:#dc2626; }
+        .conv-empty { padding:34px 12px; text-align:center; color:#94a3b8; font-size:11px; }
+        .conv-empty i { display:block; font-size:24px; color:#cbd5e1; margin-bottom:8px; }
+        .conv-empty .hint { margin:4px 0 0; font-size:9.5px; color:#cbd5e1; }
+        .conv-toggle { display:none; width:28px; height:26px; border:1px solid #e2e8f0; background:#fff; border-radius:8px; color:#64748b; font-size:12px; }
+        .conv-backdrop { display:none; }
+
+        @media (max-width:1180px) {
+            .conv-toggle { display:inline-flex; align-items:center; justify-content:center; }
+            .conv-panel { position:absolute; top:0; right:0; bottom:0; width:280px; flex-basis:280px; transform:translateX(100%); transition:transform .22s ease; box-shadow:-12px 0 32px rgba(15,23,42,.14); }
+            .conv-panel.open { transform:translateX(0); }
+            .conv-backdrop.show { display:block; position:absolute; inset:0; background:rgba(15,23,42,.32); z-index:25; }
+        }
+
         .auth-layer { position:fixed; inset:0; z-index:100; overflow-y:auto; display:flex; align-items:center; justify-content:center; padding:22px; background:radial-gradient(900px 600px at 15% 10%,#1e3a8a,transparent 60%),radial-gradient(900px 700px at 90% 90%,#4c1d95,transparent 55%),linear-gradient(140deg,#070f2b,#101c43 45%,#1e1b4b); }
         .auth-layer:before, .auth-layer:after { content:""; position:fixed; border-radius:50%; filter:blur(70px); opacity:.35; pointer-events:none; }
         .auth-layer:before { width:380px; height:380px; background:#2563eb; top:-120px; right:-80px; }
@@ -418,9 +445,14 @@
                         <span class="chat-title"><i class="fa fa-comments-o"></i> 智能问答</span>
                         <span class="chat-sub">严格依据知识库回答</span>
                     </div>
-                    <div class="mode-chips">
-                        <button v-for="m in modes" :key="m.value" class="mode-chip"
-                                :class="{active: mode===m.value}" @click="mode=m.value">{{ m.label }}</button>
+                    <div class="flex items-center gap-2">
+                        <button class="conv-toggle" @click.stop="convOpen=!convOpen" title="会话记录">
+                            <i class="fa fa-history"></i>
+                        </button>
+                        <div class="mode-chips">
+                            <button v-for="m in modes" :key="m.value" class="mode-chip"
+                                    :class="{active: mode===m.value}" @click="mode=m.value">{{ m.label }}</button>
+                        </div>
                     </div>
                 </div>
 
@@ -504,6 +536,32 @@
                     </div>
                 </div>
             </main>
+
+            <div v-if="convOpen" class="conv-backdrop show" @click="convOpen=false"></div>
+
+            <aside class="conv-panel" :class="{open: convOpen}">
+                <div class="conv-head">
+                    <h2><i class="fa fa-history"></i> 会话记录</h2>
+                    <span class="badge-soft">{{ conversations.length }}</span>
+                </div>
+                <div class="conv-list scroll-thin">
+                    <div v-for="c in conversations" :key="c.id" class="conv-item"
+                         :class="{active: conversationId===c.id}" @click="openConversation(c)">
+                        <div class="conv-main">
+                            <p class="conv-title" :title="c.title">{{ c.title }}</p>
+                            <p class="conv-sub">{{ c.messageCount }} 条消息 · {{ formatConversationTime(c.updatedAt) }}</p>
+                        </div>
+                        <button class="conv-del" title="删除会话" @click.stop="deleteConversation(c)">
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                    </div>
+                    <div v-if="!conversations.length" class="conv-empty">
+                        <i class="fa fa-comments-o"></i>
+                        还没有会话记录
+                        <p class="hint">发送第一个问题后会自动保存</p>
+                    </div>
+                </div>
+            </aside>
         </div>
     </div>
 
@@ -574,6 +632,8 @@
                 question: '',
                 sending: false,
                 conversationId: null,
+                conversations: [],
+                convOpen: false,
                 sidebarOpen: false,
                 userMenuOpen: false,
                 passwordModal: false,
@@ -680,6 +740,7 @@
                     this.auth.user = me;
                     localStorage.setItem('campus_user', JSON.stringify(me));
                     await this.loadFiles();
+                    await this.loadConversations(true);
                 } catch (e) {
                     if (this.auth.token) {
                         this.logout();
@@ -724,6 +785,7 @@
                     this.focusedFile = null;
                     this.notify('欢迎回来，' + (data.user.displayName || data.user.username), 'success');
                     await this.loadFiles();
+                    await this.loadConversations(true);
                 } catch (e) {
                     this.authError = e.message || '登录失败';
                 } finally {
@@ -738,6 +800,8 @@
                 this.publicFiles = [];
                 this.messages = [];
                 this.conversationId = null;
+                this.conversations = [];
+                this.convOpen = false;
                 this.focusedFile = null;
                 this.pendingFiles = [];
                 this.userMenuOpen = false;
@@ -949,6 +1013,7 @@
                     assistant.latency = data.latencyMs;
                     assistant.modeLabel = this.modeLabel(data.mode || this.mode);
                     this.$nextTick(() => this.renderMath());
+                    this.loadConversations(true);
                 } catch (e) {
                     assistant.content = e.message || '请求失败，请稍后重试。';
                     assistant.loading = false;
@@ -959,9 +1024,84 @@
                     this.scrollBottom();
                 }
             },
+            async loadConversations(silent = false) {
+                if (!this.auth.token) {
+                    this.conversations = [];
+                    return;
+                }
+                try {
+                    const list = await this.api('/api/chat/conversations');
+                    this.conversations = list || [];
+                } catch (e) {
+                    if (!silent) {
+                        this.notify(e.message, 'error');
+                    }
+                }
+            },
+            async openConversation(conv) {
+                if (this.sending) {
+                    this.notify('正在回答中，请稍候再切换会话', 'info');
+                    return;
+                }
+                if (this.conversationId === conv.id) {
+                    this.convOpen = false;
+                    return;
+                }
+                try {
+                    const list = await this.api('/api/chat/conversations/' + conv.id + '/messages');
+                    this.conversationId = conv.id;
+                    this.messages = (list || []).map(m => ({
+                        role: m.role === 'USER' ? 'user' : 'assistant',
+                        content: m.content || '',
+                        citations: m.citations || [],
+                        loading: false,
+                        showSources: false
+                    }));
+                    this.focusedFile = null;
+                    this.convOpen = false;
+                    this.$nextTick(() => {
+                        this.renderMath();
+                        this.scrollBottom();
+                    });
+                } catch (e) {
+                    this.notify(e.message, 'error');
+                }
+            },
+            async deleteConversation(conv) {
+                if (!window.confirm('确定删除会话「' + conv.title + '」吗？会话内的消息会一并删除。')) {
+                    return;
+                }
+                try {
+                    await this.api('/api/chat/conversations/' + conv.id, { method: 'DELETE' });
+                    if (this.conversationId === conv.id) {
+                        this.newChat();
+                    }
+                    await this.loadConversations(true);
+                    this.notify('会话已删除', 'success');
+                } catch (e) {
+                    this.notify(e.message, 'error');
+                }
+            },
+            formatConversationTime(value) {
+                if (!value) {
+                    return '';
+                }
+                const date = new Date(value);
+                if (isNaN(date.getTime())) {
+                    return '';
+                }
+                const pad = n => String(n).padStart(2, '0');
+                const now = new Date();
+                if (date.toDateString() === now.toDateString()) {
+                    return pad(date.getHours()) + ':' + pad(date.getMinutes());
+                }
+                return (date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' +
+                    pad(date.getHours()) + ':' + pad(date.getMinutes());
+            },
             newChat() {
                 this.messages = [];
                 this.conversationId = null;
+                this.convOpen = false;
                 this.focusedFile = null;
                 this.mode = 'qa';
                 this.question = '';

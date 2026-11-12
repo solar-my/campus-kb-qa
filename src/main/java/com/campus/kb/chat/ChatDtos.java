@@ -3,6 +3,7 @@ package com.campus.kb.chat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public final class ChatDtos {
@@ -27,5 +28,20 @@ public final class ChatDtos {
             List<Citation> citations,
             String mode,
             long latencyMs) {
+    }
+
+    public record ConversationDto(
+            Long id,
+            String title,
+            long messageCount,
+            LocalDateTime updatedAt) {
+    }
+
+    public record ConversationMessageDto(
+            Long id,
+            String role,
+            String content,
+            List<Citation> citations,
+            LocalDateTime createdAt) {
     }
 }

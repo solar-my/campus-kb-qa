@@ -158,7 +158,57 @@ curl -X POST http://localhost:8080/api/file/upload \
 
 ---
 
-## 4. 健康检查
+## 4. 会话历史
+
+三个接口都需要登录，并且只能操作自己的会话。
+
+### 4.1 会话列表
+
+`GET /api/chat/conversations`
+
+```json
+[
+  {
+    "id": 8,
+    "title": "国家励志奖学金需要什么条件？",
+    "messageCount": 4,
+    "updatedAt": "2026-11-12T13:22:01"
+  }
+]
+```
+
+按 `updatedAt` 倒序；`messageCount` 是该会话的消息条数（包含用户与助手）。
+
+### 4.2 会话消息
+
+`GET /api/chat/conversations/{id}/messages`
+
+```json
+[
+  { "id": 17, "role": "USER", "content": "国家励志奖学金需要什么条件？",
+    "citations": [], "createdAt": "2026-11-12T13:21:40" },
+  { "id": 18, "role": "ASSISTANT", "content": "……", 
+    "citations": [ { "index": 1, "fileId": 3, "filename": "奖助学金申请指南.md",
+                     "chunkIndex": 4, "score": 0.83, "snippet": "……" } ],
+    "createdAt": "2026-11-12T13:21:42" }
+]
+```
+
+`role` 为 `USER` / `ASSISTANT`；`citations` 是保存回答时序列化的引用列表。会话不属于当前用户时返回 404。
+
+### 4.3 删除会话
+
+`DELETE /api/chat/conversations/{id}`
+
+```json
+{ "success": true, "message": "会话已删除" }
+```
+
+会先删除该会话的所有消息，再删除会话本身（同一事务），不会留下孤儿记录。
+
+---
+
+## 5. 健康检查
 
 `GET /api/health`（无需登录）
 
